@@ -25,7 +25,9 @@ function Hire() {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (profileRes.ok) {
+            
             const profileData = await profileRes.json();
+            //console.log(profileData);
             if (profileData.user) {
               allUsers = allUsers.filter(u => u.username !== profileData.user.username);
             }

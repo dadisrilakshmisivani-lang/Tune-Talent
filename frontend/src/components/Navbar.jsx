@@ -18,10 +18,10 @@ function Navbar() {
           <div className="flex-shrink-0 flex items-center">
             <Link
               to="/"
-              className="flex items-center gap-3 text-2xl font-bold bg-clip-text text-transparent bg-black"
+              className="flex items-center gap-1 text-2xl font-bold bg-clip-text text-transparent bg-black"
             >
-              <img src={logo} height="50" width="50" alt="TuneTalent logo" />
-              <span>TuneTalent</span>
+              <img src={logo} height="35" width="35" alt="TuneTalent logo" />
+              <span >TuneTalent</span>
             </Link>
           </div>
           <div className="flex space-x-4">
