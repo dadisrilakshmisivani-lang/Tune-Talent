@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Sequencer from "../components/Sequencer";
 
 function Collab() {
-  const  roomId  = useParams();
+  const { roomId } = useParams();
   const navigate = useNavigate();
 
   return (
