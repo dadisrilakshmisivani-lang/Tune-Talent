@@ -19,6 +19,12 @@ exports.register = async (req, res) => {
         let payload = { username: username, email: email }
         let token = await jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: '10hr' })
 
+        res.cookie('token', token, {
+            httpOnly: false,
+            secure: false,
+            maxAge: 10 * 60 * 60 * 1000
+        });
+
         await mail(email, username);
         res.status(201).json({ message: "User Registered Successfully", token: token })
 
@@ -43,6 +49,12 @@ exports.login = async (req, res, next) => {
 
         let payload = { username: checkuser.username, email: checkuser.email }
         let token = await jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: '10hr' })
+
+        res.cookie('token', token, {
+            httpOnly: false,
+            secure: false,
+            maxAge: 10 * 60 * 60 * 1000
+        });
 
         res.status(200).json({ message: "Login Successful", token: token })
     } catch (err) {

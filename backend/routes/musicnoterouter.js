@@ -6,6 +6,7 @@ const upload = require("../middlewares/upload.js")
 
 router.post("/upload",auth,upload.single('file'),uploadnote)
 router.get("/my",auth,getmynotes)
+router.get("/all",getallnotes)
 router.get("/:noteid",getnotebyid)
 router.post("/:noteid/rate",auth,ratenote)
 router.post("/:noteid/bid",auth,bidonnote)
