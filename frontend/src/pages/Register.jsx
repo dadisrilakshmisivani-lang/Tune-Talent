@@ -49,7 +49,7 @@ function Register() {
 
     try {
       setLoading(true);
-      let response = await fetch("http://localhost:3000/auth/register", {
+      let response = await fetch("https://tune-talent.onrender.com/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -70,7 +70,7 @@ function Register() {
           if (profileimage) formData.append("profileimage", profileimage);
 
           try {
-            await fetch("http://localhost:3000/profile/update", {
+            await fetch("https://tune-talent.onrender.com/profile/update", {
               method: "PUT",
               headers: {
                 Authorization: `Bearer ${data.token}`,

@@ -68,7 +68,7 @@ export default function Sequencer({ roomId }) {
   useEffect(() => {
     if (!isCollab) return;
 
-    const socket = io("http://localhost:3000");
+    const socket = io("https://tune-talent.onrender.com");
     socketRef.current = socket;
 
     socket.emit("join-room", roomId);
@@ -261,7 +261,7 @@ export default function Sequencer({ roomId }) {
     body.append("rate", form.isForBidding ? form.rate : 0);
 
     try {
-      const res = await fetch("http://localhost:3000/music/upload", {
+      const res = await fetch("https://tune-talent.onrender.com/music/upload", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body,

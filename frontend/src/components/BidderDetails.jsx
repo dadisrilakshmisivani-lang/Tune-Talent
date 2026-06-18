@@ -59,7 +59,7 @@ function BidderDetails({ notes }) {
     setErrorMsg("");
     setSuccessMsg("");
     try {
-      const response = await fetch(`http://localhost:3000/profile/${selectedBidder._id}/hire`, {
+      const response = await fetch(`https://tune-talent.onrender.com/profile/${selectedBidder._id}/hire`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ message }),

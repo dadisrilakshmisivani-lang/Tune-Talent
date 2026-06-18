@@ -233,7 +233,7 @@ function Explore() {
     const fetchData = async () => {
       try {
         if (isAuthenticated && token) {
-          const profileRes = await fetch("http://localhost:3000/profile/me", {
+          const profileRes = await fetch("https://tune-talent.onrender.com/profile/me", {
             headers: { Authorization: `Bearer ${token}` },
             credentials: "include",
           });
@@ -244,7 +244,7 @@ function Explore() {
           }
         }
 
-        const notesRes = await fetch("http://localhost:3000/music/all");
+        const notesRes = await fetch("https://tune-talent.onrender.com/music/all");
         if (notesRes.status === 429) throw new Error("Too many requests. Please slow down and try again later.");
         
         const notesData = await notesRes.json();
@@ -268,7 +268,7 @@ function Explore() {
   const handleRate = async (noteId, value) => {
     if (!isAuthenticated) return;
     try {
-      const res = await fetch(`http://localhost:3000/music/${noteId}/rate`, {
+      const res = await fetch(`https://tune-talent.onrender.com/music/${noteId}/rate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -301,7 +301,7 @@ function Explore() {
     }
 
     try {
-      const res = await fetch(`http://localhost:3000/music/${noteId}/bid`, {
+      const res = await fetch(`https://tune-talent.onrender.com/music/${noteId}/bid`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
