@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const path = require('path');
+const dns = require('dns');
 
 require('dotenv').config({
   path: path.resolve(__dirname, '../.env')
@@ -7,11 +8,17 @@ require('dotenv').config({
 
 const sendHireMail = async (email, username, subject, htmlBody) => {
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465 ,
+    secure: true,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+    name: 'localhost',
+    lookup(hostname, options, callback) {
+      dns.lookup(hostname, { family: 4 }, callback);
+    }
   });
 
   const msg = {
