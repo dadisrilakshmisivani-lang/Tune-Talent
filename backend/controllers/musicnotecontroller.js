@@ -1,7 +1,7 @@
 const musicnotemodel = require('../models/musicnotemodel')
 const usermodel = require('../models/usermodel')
 const cloudinary = require('../config/cloudinary')
-const mail = require('../utils/gmail.js')
+const bidMail = require('../utils/bidmailservice.js')
 
 // Helper function to check and close bidding for a single note
 const checkAndCloseBidding = async (note) => {
@@ -168,7 +168,7 @@ exports.bidonnote = async (req,res) =>{
         <p>Log in to your TuneTalent dashboard to view all bids.</p>
         `;
 
-        await mail(
+        await bidMail(
             note.user.email,
             note.user.username,
             `New Bid Placed on "${note.title}"`,

@@ -20,8 +20,8 @@ exports.register = async (req, res) => {
         let token = await jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: '10hr' })
 
         res.cookie('token', token, {
-            httpOnly: false,
-            secure: false,
+            httpOnly: true,
+            secure: true,
             maxAge: 10 * 60 * 60 * 1000
         });
 

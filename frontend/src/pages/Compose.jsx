@@ -27,15 +27,15 @@ function Compose() {
             >
               <span>←</span> Back
             </button>
-            
+
             <button
               onClick={handleStartCollab}
-              className="px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white transition duration-200 cursor-pointer text-sm font-semibold shadow-sm flex items-center gap-2"
+              className="px-4 py-2 rounded-2xl bg-black hover:bg-indigo-700 text-white transition duration-200 cursor-pointer text-sm font-semibold shadow-sm flex items-center gap-2"
             >
-              Start Collab Jam 👥
+              Start Collab Jam
             </button>
           </div>
-          
+
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-600 text-xs font-bold uppercase tracking-wider shadow-sm">
             <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping"></span>
             Virtual Studio Mode
