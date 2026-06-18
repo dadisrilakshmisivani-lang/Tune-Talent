@@ -18,7 +18,7 @@ function Hire() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:3000/profile/all", {
+        const response = await fetch("https://tune-talent.onrender.com/profile/all", {
           credentials: "include",
         });
         if (response.status === 429) throw new Error("Too many requests. Please slow down and try again later.");
@@ -34,7 +34,7 @@ function Hire() {
         const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
 
         if (token) {
-          const profileRes = await fetch("http://localhost:3000/profile/me", {
+          const profileRes = await fetch("https://tune-talent.onrender.com/profile/me", {
             headers: { Authorization: `Bearer ${token}` },
             credentials: "include",
           });
@@ -101,7 +101,7 @@ function Hire() {
     setSuccessMsg("");
 
     try {
-      const response = await fetch(`http://localhost:3000/profile/${selectedUser._id}/hire`, {
+      const response = await fetch(`https://tune-talent.onrender.com/profile/${selectedUser._id}/hire`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

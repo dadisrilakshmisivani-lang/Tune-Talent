@@ -56,7 +56,7 @@ function Dashboard() {
     const fetchData = async () => {
       try {
         // Fetch User Profile
-        const profileRes = await fetch("http://localhost:3000/profile/me", {
+        const profileRes = await fetch("https://tune-talent.onrender.com/profile/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -71,7 +71,7 @@ function Dashboard() {
         setUser(profileData.user);
 
         // Fetch User's Music Notes
-        const notesRes = await fetch("http://localhost:3000/music/my", {
+        const notesRes = await fetch("https://tune-talent.onrender.com/music/my", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

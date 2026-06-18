@@ -1,5 +1,9 @@
 const nodemailer = require('nodemailer');
 const path = require('path');
+const dns = require('dns');
+
+// Force Node to use IPv4 instead of IPv6 to prevent ENETUNREACH errors on certain networks
+dns.setDefaultResultOrder('ipv4first');
 
 require('dotenv').config({
   path: path.resolve(__dirname, '../.env')

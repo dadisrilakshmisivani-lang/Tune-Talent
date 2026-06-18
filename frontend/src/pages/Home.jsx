@@ -15,7 +15,7 @@ function Home() {
 
     const fetchProfile = async () => {
       try {
-        const response = await fetch("http://localhost:3000/profile/me", {
+        const response = await fetch("https://tune-talent.onrender.com/profile/me", {
           headers: { Authorization: `Bearer ${token}` },
           credentials: "include",
         });

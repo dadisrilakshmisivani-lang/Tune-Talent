@@ -17,7 +17,7 @@ const port = 3000;
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "https://tune-talent.vercel.app"],
     credentials: true
 }))
 app.use(limiter)
@@ -31,8 +31,9 @@ app.use("/music",musicnoterouter)
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173",
-        methods: ["GET", "POST"]
+        origin: ["http://localhost:5173", "https://tune-talent.vercel.app"],
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
