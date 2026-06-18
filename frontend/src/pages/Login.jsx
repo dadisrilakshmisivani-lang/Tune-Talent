@@ -21,15 +21,11 @@ function Login() {
   const navigate = useNavigate();
   const { isAuthenticated, login } = useAuth();
 
-  useEffect(() => {
-<<<<<<< HEAD
-    if (localStorage.getItem("auth_token")) {
-=======
-    if (isAuthenticated) {
->>>>>>> 759e9edc16d2fe2ce0471fc7e296a24cdbfcc16c
-      navigate("/dashboard");
-    }
-  }, [isAuthenticated, navigate]);
+ useEffect(() => {
+  if (localStorage.getItem("auth_token")) {
+    navigate("/dashboard");
+  }
+}, [navigate]);
 
   let sendDetails = async (event) => {
     event.preventDefault();
