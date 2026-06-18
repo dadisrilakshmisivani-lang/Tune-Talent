@@ -19,7 +19,7 @@ function Hire() {
 
         let allUsers = data.users || [];
         
-        const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+        const token = localStorage.getItem("auth_token");
         if (token) {
           const profileRes = await fetch("http://localhost:3000/profile/me", {
             headers: { Authorization: `Bearer ${token}` }

@@ -19,7 +19,7 @@ function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (localStorage.getItem("token") || localStorage.getItem("auth_token")) {
+    if (localStorage.getItem("auth_token")) {
       navigate("/dashboard");
     }
   }, [navigate]);
