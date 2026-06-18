@@ -1,50 +1,28 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const path = require('path');
-const dns = require('dns');
-
-// Force Node to use IPv4 instead of IPv6 to prevent ENETUNREACH errors on certain networks
-dns.setDefaultResultOrder('ipv4first');
 
 require('dotenv').config({
   path: path.resolve(__dirname, '../.env')
 });
 
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 const body = `
 <h2>User Registered Successfully</h2>
-<p>Your email has been registered successfully.</p>
+<p>Your account has been created successfully.</p>
 `;
 
 const mail = async (email, username) => {
-
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    requireTLS: true,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-    name: 'localhost',
-    lookup(hostname, options, callback) {
-      dns.lookup(hostname, { family: 4 }, callback);
-    }
-  });
-
-  const msg = {
-    from: `"Sonu" ${process.env.SMTP_USER}`,
-    to: email,
-    subject: `${username} Account Creation`,
-    text: "Hello World",
-    html: body,
-  };
-
   try {
-    const info = await transporter.sendMail(msg);
-
-    console.log("Message sent:", info.messageId);
+    const data = await resend.emails.send({
+      from: 'TuneTalent <onboarding@resend.dev>',
+      to: [email],
+      subject: `${username} Account Creation`,
+      html: body,
+    });
+    console.log("Registration email sent via Resend:", data);
   } catch (err) {
-    console.error("Error while sending mail:", err);
+    console.error("Error while sending registration mail via Resend:", err);
   }
 };
 
