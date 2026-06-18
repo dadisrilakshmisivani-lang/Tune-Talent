@@ -8,6 +8,11 @@ function Hire() {
   const [error, setError] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const { token } = useAuth();
+  
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -70,6 +75,48 @@ function Hire() {
 
   const handleContactClick = (user) => {
     setSelectedUser(user);
+    setMessage("");
+    setSuccessMsg("");
+    setErrorMsg("");
+  };
+
+  const handleSendHireEmail = async () => {
+    if (!message.trim()) {
+      setErrorMsg("Please enter a message to convey.");
+      return;
+    }
+
+    setSending(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      const response = await fetch(`http://localhost:3000/profile/${selectedUser._id}/hire`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ message }),
+      });
+      const data = await response.json();
+
+      if (response.ok && data.message === "Inquiry sent successfully") {
+        setSuccessMsg("Your hiring inquiry has been sent successfully!");
+        setMessage("");
+        setTimeout(() => {
+          setSelectedUser(null);
+          setSuccessMsg("");
+        }, 2000);
+      } else {
+        setErrorMsg(data.message || "Failed to send hiring inquiry.");
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("An error occurred while sending the email. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -136,7 +183,7 @@ function Hire() {
                 </div>
                 <button 
                   onClick={() => setSelectedUser(null)}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                  className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -147,12 +194,12 @@ function Hire() {
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Contact Info</h4>
-                  <p className="text-slate-800">
+                  <p className="text-slate-800 text-sm">
                     <span className="font-medium mr-2">Email:</span>
                     <a href={`mailto:${selectedUser.email}`} className="text-blue-600 hover:underline">{selectedUser.email}</a>
                   </p>
                   {selectedUser.phone && (
-                    <p className="text-slate-800 mt-1">
+                    <p className="text-slate-800 text-sm mt-1">
                       <span className="font-medium mr-2">Phone:</span>
                       {selectedUser.phone}
                     </p>
@@ -165,21 +212,51 @@ function Hire() {
                     {selectedUser.bio || "This talented musician hasn't added a bio yet."}
                   </p>
                 </div>
+
+                {token ? (
+                  <div className="border-t border-slate-100 pt-4">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Message to Convey</label>
+                    <textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Explain details of your project, budget, and timelines..."
+                      rows={4}
+                      className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition resize-none text-sm text-slate-800 bg-white"
+                      disabled={sending || !!successMsg}
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-xs font-semibold">
+                    🔒 Please log in to write a message and contact this musician.
+                  </div>
+                )}
+
+                {errorMsg && (
+                  <p className="text-sm font-semibold text-red-600 text-center">{errorMsg}</p>
+                )}
+                {successMsg && (
+                  <p className="text-sm font-semibold text-green-600 text-center">{successMsg}</p>
+                )}
               </div>
             </div>
             <div className="bg-slate-50 px-8 py-4 border-t border-slate-100 flex justify-end">
               <button 
                 onClick={() => setSelectedUser(null)}
-                className="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-medium transition-colors"
+                disabled={sending}
+                className="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-medium transition-colors cursor-pointer"
               >
                 Close
               </button>
-              <a 
-                href={`mailto:${selectedUser.email}`}
-                className="ml-3 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm"
-              >
-                Send Email
-              </a>
+              {token && (
+                <button 
+                  onClick={handleSendHireEmail}
+                  disabled={sending || !!successMsg || !message.trim()}
+                  className="ml-3 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors shadow-sm cursor-pointer"
+                >
+                  {sending ? "Sending..." : "Send Email"}
+                </button>
+              )}
             </div>
           </div>
         </div>
