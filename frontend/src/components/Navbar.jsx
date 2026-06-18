@@ -1,13 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
+import { useAuth } from "../context/AuthContext";
 
 function Navbar() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+  const { isAuthenticated, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("auth_token");
+    logout();
     navigate("/login");
   };
 
@@ -38,7 +38,13 @@ function Navbar() {
             <Link to="/hire" className="hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
               Hire
             </Link>
-            {token ? (
+            <Link to="/explore" className="hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              Explore
+            </Link>
+            <Link to="/compose" className="hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              Studio
+            </Link>
+            {isAuthenticated ? (
               <>
                 <Link to="/dashboard" className="hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Dashboard

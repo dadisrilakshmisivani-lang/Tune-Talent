@@ -16,6 +16,7 @@ let musicnoteschema = new mongoose.Schema({
         amount :{type : Number,required : true},
         createdat :{type : Date,default : Date.now}
     }],
+    biddingClosed :{type : Boolean,default : false},
     date :{type : Date,default : Date.now}
 })
 

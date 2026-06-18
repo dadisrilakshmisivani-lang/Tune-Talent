@@ -5,19 +5,28 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Hire from "./pages/Hire";
+import Explore from "./pages/Explore";
+import Compose from "./pages/Compose";
+import Collab from "./pages/Collab";
+import { AuthProvider } from "./context/AuthContext";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/hire" element={<Hire />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/hire" element={<Hire />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/compose" element={<Compose />} />
+          <Route path="/collab/:roomId" element={<Collab />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

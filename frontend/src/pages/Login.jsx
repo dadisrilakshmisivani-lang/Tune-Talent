@@ -2,6 +2,8 @@ import { z } from "zod";
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
+import { useAuth } from "../context/AuthContext";
+
 let userschema = z.string().min(3, "Username must be at least 3 characters").max(16, "Max length should be 16 characters");
 let passchema = z.string().min(6, "Password must be at least 6 characters").max(16, "Max length should be 16 characters");
 
@@ -17,12 +19,13 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { isAuthenticated, login } = useAuth();
 
   useEffect(() => {
-    if (localStorage.getItem("token") || localStorage.getItem("auth_token")) {
+    if (isAuthenticated) {
       navigate("/dashboard");
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
   let sendDetails = async (event) => {
     event.preventDefault();
@@ -42,6 +45,7 @@ function Login() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           username,
           password,
@@ -51,7 +55,7 @@ function Login() {
       let data = await response.json();
 
       if (response.ok && data.token) {
-        localStorage.setItem("token", data.token);
+        login(data.token);
         navigate("/dashboard");
       } else {
         setError(data.message || "Login failed");

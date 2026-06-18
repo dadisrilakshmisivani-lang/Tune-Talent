@@ -1,16 +1,20 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Hire() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
+  const { token } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:3000/profile/all");
+        const response = await fetch("http://localhost:3000/profile/all", {
+          credentials: "include",
+        });
         const data = await response.json();
         
         if (!response.ok) {
@@ -19,10 +23,10 @@ function Hire() {
 
         let allUsers = data.users || [];
         
-        const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
         if (token) {
           const profileRes = await fetch("http://localhost:3000/profile/me", {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
+            credentials: "include",
           });
           if (profileRes.ok) {
             
@@ -44,7 +48,7 @@ function Hire() {
     };
 
     fetchData();
-  }, []);
+  }, [token]);
 
   if (loading) {
     return (

@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import ProfileCard from "../components/ProfileCard";
+import CompositionCard from "../components/CompositionCard";
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -7,9 +10,11 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { token, logout } = useAuth();
+
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
-    const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
     if (!token) {
       navigate("/login");
       return;
@@ -22,6 +27,7 @@ function Dashboard() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          credentials: "include",
         });
         const profileData = await profileRes.json();
         
@@ -35,6 +41,7 @@ function Dashboard() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          credentials: "include",
         });
         const notesData = await notesRes.json();
         if (notesRes.ok && notesData.notes) {
@@ -44,8 +51,7 @@ function Dashboard() {
       } catch (err) {
         console.error(err);
         if (err.message === "Invalid or Expired Token" || err.message === "No Token Provided") {
-          localStorage.removeItem("token");
-          localStorage.removeItem("auth_token");
+          logout();
           navigate("/login");
         } else {
           setError(err.message || "Error loading dashboard data.");
@@ -56,7 +62,12 @@ function Dashboard() {
     };
 
     fetchData();
-  }, [navigate]);
+  }, [token, refreshTrigger, logout, navigate]);
+
+  const handleUploadSuccess = () => {
+    setShowUploadModal(false);
+    setRefreshTrigger((prev) => prev + 1);
+  };
 
   if (loading) {
     return (
@@ -87,63 +98,14 @@ function Dashboard() {
       <div className="max-w-5xl mx-auto space-y-8">
         
         {/* Profile Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex flex-col md:flex-row items-center gap-8">
-          <div className="w-32 h-32 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-4xl font-bold overflow-hidden shadow-inner shrink-0">
-            {user.profileimage ? (
-              <img src={user.profileimage} alt={user.username} className="w-full h-full object-cover" />
-            ) : (
-              user.username.charAt(0).toUpperCase()
-            )}
-          </div>
-          <div className="text-center md:text-left space-y-2">
-            <h1 className="text-4xl font-bold text-slate-800">{user.username}</h1>
-            <p className="text-slate-500">{user.email}</p>
-            {user.phone && <p className="text-slate-500 text-sm">📞 {user.phone}</p>}
-            <p className="text-slate-700 max-w-xl mt-4">
-              {user.bio || "No bio added yet. Update your profile to add some details about your musical journey."}
-            </p>
-          </div>
-        </div>
+        <ProfileCard user={user} />
 
         {/* Music Notes Section */}
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center">
-            <span className="mr-2">🎵</span> Your Compositions
-          </h2>
-          
+        <div>          
           {notes.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {notes.map((note) => (
-                <div key={note._id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow flex flex-col">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-xl font-bold text-slate-800 line-clamp-1">{note.title}</h3>
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
-                      {note.genre}
-                    </span>
-                  </div>
-                  <p className="text-slate-600 text-sm mb-4 line-clamp-3 flex-grow">
-                    {note.description || "No description provided."}
-                  </p>
-                  <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 mt-auto">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="font-semibold text-slate-700">
-                        Start Bid: ₹{note.rate}
-                      </span>
-                      <span className="text-yellow-500 font-medium">
-                        ⭐ {note.ratings && note.ratings.length > 0 
-                          ? (note.ratings.reduce((acc, curr) => acc + curr.value, 0) / note.ratings.length).toFixed(1) 
-                          : "0"}/5
-                      </span>
-                    </div>
-                    <audio 
-                      controls 
-                      src={note.fileurl} 
-                      className="w-full h-10 outline-none"
-                    >
-                      Your browser does not support the audio element.
-                    </audio>
-                  </div>
-                </div>
+                <CompositionCard key={note._id} note={note} />
               ))}
             </div>
           ) : (
@@ -155,6 +117,34 @@ function Dashboard() {
           )}
         </div>
 
+        {/* Sequencer Teaser Section */}
+        <div className="bg-slate-900 rounded-3xl p-6 md:p-8 text-white relative overflow-hidden shadow-xl mt-4">
+          {/* Decorative background glows */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -z-10"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -z-10"></div>
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-3 max-w-xl">
+              <span className="inline-block px-3 py-1 rounded-full bg-indigo-500/15 text-indigo-300 text-xs font-bold uppercase tracking-wider">
+                Studio Workspace
+              </span>
+              <h3 className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-100 to-cyan-100">
+                Let's compose something new
+              </h3>
+              <p className="text-slate-400 text-xs md:text-sm leading-relaxed">
+                Ready to sketch out a new beat? Launch our interactive step sequencer to test rhythms, adjust speed, and design drums on a dedicated layout.
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              <Link
+                to="/compose"
+                className="inline-block px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-base transition duration-200 shadow-lg shadow-indigo-600/30 hover:-translate-y-0.5 transform cursor-pointer text-center w-full md:w-auto"
+              >
+                Open Beat Creator
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -3,11 +3,19 @@ const env = require('dotenv').config()
 
 const auth = async (req,res,next) =>{
     try{
-        const authheader = req.headers.authorization
-        if(!authheader) return res.json({message : "No Token Provided"})
+        let token = null;
 
-        const [bearer,token] = authheader.split(' ')
-        if(!token) return res.json({message : "Invalid Token Format"})
+        const authheader = req.headers.authorization
+        if (authheader) {
+            const [bearer, headerToken] = authheader.split(' ')
+            if (headerToken) token = headerToken;
+        }
+
+        if (!token && req.cookies) {
+            token = req.cookies.token;
+        }
+
+        if(!token) return res.json({message : "No Token Provided"})
 
         let decoded = await jwt.verify(token,process.env.SECRET_KEY)
         req.user = decoded

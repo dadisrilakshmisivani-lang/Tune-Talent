@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 let userschema = z.string().min(3, "Username must be at least 3 characters").max(16, "Max limit 16 characters");
 let passwordchema = z.string().min(6, "Password must be at least 6 characters").max(16, "Max limit 16 characters");
@@ -24,12 +25,13 @@ function Register() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated, login } = useAuth();
 
   useEffect(() => {
-    if (localStorage.getItem("token") || localStorage.getItem("auth_token")) {
+    if (isAuthenticated) {
       navigate("/dashboard");
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
   let sendDetails = async (e) => {
     e.preventDefault();
@@ -52,12 +54,13 @@ function Register() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ username, email, password }),
       });
       let data = await response.json();
 
       if (response.ok && data.token) {
-        localStorage.setItem("token", data.token);
+        login(data.token);
 
         // Upload additional profile details if provided
         if (bio || phone || profileimage) {
@@ -72,6 +75,7 @@ function Register() {
               headers: {
                 Authorization: `Bearer ${data.token}`,
               },
+              credentials: "include",
               body: formData,
             });
           } catch (updateErr) {

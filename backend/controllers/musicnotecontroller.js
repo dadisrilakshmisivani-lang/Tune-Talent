@@ -1,6 +1,38 @@
 const musicnotemodel = require('../models/musicnotemodel')
 const usermodel = require('../models/usermodel')
 const cloudinary = require('../config/cloudinary')
+const mail = require('../utils/gmail.js')
+
+// Helper function to check and close bidding for a single note
+const checkAndCloseBidding = async (note) => {
+    if (note && !note.biddingClosed) {
+        const oneDay = 24 * 60 * 60 * 1000;
+        const timeDiff = Date.now() - new Date(note.date).getTime();
+        if (timeDiff > oneDay) {
+            note.biddingClosed = true;
+            await note.save();
+        }
+    }
+    return note;
+};
+
+// Helper function to check and close bidding for multiple notes
+const checkAndCloseMultipleBidding = async (notes) => {
+    const oneDay = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const updatedNotes = [];
+    for (let note of notes) {
+        if (!note.biddingClosed) {
+            const timeDiff = now - new Date(note.date).getTime();
+            if (timeDiff > oneDay) {
+                note.biddingClosed = true;
+                await note.save();
+            }
+        }
+        updatedNotes.push(note);
+    }
+    return updatedNotes;
+};
 
 exports.uploadnote = async (req,res) =>{
     try{
@@ -39,8 +71,19 @@ exports.getmynotes = async (req,res) =>{
         let user = await usermodel.findOne({username : req.user.username})
         if(!user) return res.json({message : "User Not Found"})
 
-        let notes = await musicnotemodel.find({user : user._id}).populate('user','username email')
+        let notes = await musicnotemodel.find({user : user._id}).populate('user','username email').populate('bids.user','username')
+        notes = await checkAndCloseMultipleBidding(notes)
         res.status(200).json({message : "Notes Fetched",notes : notes})
+    }catch(err){
+        res.json({message : err.message})
+    }
+}
+
+exports.getallnotes = async (req,res) =>{
+    try{
+        let notes = await musicnotemodel.find().populate('user','username email').populate('bids.user','username')
+        notes = await checkAndCloseMultipleBidding(notes)
+        res.status(200).json({message : "All Notes Fetched",notes : notes})
     }catch(err){
         res.json({message : err.message})
     }
@@ -51,6 +94,7 @@ exports.getnotebyid = async (req,res) =>{
         let note = await musicnotemodel.findById(req.params.noteid).populate('user','username email').populate('ratings.user','username').populate('bids.user','username')
         if(!note) return res.json({message : "Note Not Found"})
 
+        note = await checkAndCloseBidding(note)
         res.status(200).json({message : "Note Fetched",note : note})
     }catch(err){
         res.json({message : err.message})
@@ -68,6 +112,7 @@ exports.ratenote = async (req,res) =>{
         let note = await musicnotemodel.findById(req.params.noteid)
         if(!note) return res.json({message : "Note Not Found"})
 
+        if(!note.user) return res.json({message : "The owner of this note no longer exists."})
         if(note.user.toString() === user._id.toString()) return res.json({message : "Cannot rate your own note"})
 
         let existingrating = note.ratings.find(r => r.user.toString() === user._id.toString())
@@ -88,17 +133,47 @@ exports.bidonnote = async (req,res) =>{
     try{
         const {amount} = req.body
         if(!amount) return res.json({message : "Bid Amount Required"})
+        const bidAmount = Number(amount)
+        if(isNaN(bidAmount) || bidAmount <= 0) return res.json({message : "Invalid Bid Amount"})
 
         let user = await usermodel.findOne({username : req.user.username})
         if(!user) return res.json({message : "User Not Found"})
 
-        let note = await musicnotemodel.findById(req.params.noteid)
+        let note = await musicnotemodel.findById(req.params.noteid).populate('user')
         if(!note) return res.json({message : "Note Not Found"})
 
-        if(note.user.toString() === user._id.toString()) return res.json({message : "Cannot bid on your own note"})
+        if(!note.user) return res.json({message : "The owner of this note no longer exists."})
+        if(note.user._id.toString() === user._id.toString()) return res.json({message : "Cannot bid on your own note"})
 
-        note.bids.push({user : user._id,amount : amount})
+        // Check if bidding is closed
+        note = await checkAndCloseBidding(note)
+        if(note.biddingClosed) {
+            return res.json({message : "Bidding is closed for this music note"})
+        }
+
+        // Bidding rules: must be higher than current highest bid (which starts at base rate)
+        const highestBid = note.bids.reduce((max, b) => b.amount > max ? b.amount : max, note.rate)
+        if(bidAmount <= highestBid) {
+            return res.json({message : `Bid must be higher than the current highest bid (₹${highestBid})`})
+        }
+
+        note.bids.push({user : user._id,amount : bidAmount})
         await note.save()
+
+        // Send email to note owner
+        const emailBody = `
+        <h2>New Bid Placed on TuneTalent!</h2>
+        <p>Hello <strong>${note.user.username}</strong>,</p>
+        <p>User <strong>${user.username}</strong> has placed a bid of <strong>₹${bidAmount}</strong> on your composition <strong>"${note.title}"</strong>.</p>
+        <p>Log in to your TuneTalent dashboard to view all bids.</p>
+        `;
+
+        await mail(
+            note.user.email,
+            note.user.username,
+            `New Bid Placed on "${note.title}"`,
+            emailBody
+        );
 
         res.status(201).json({message : "Bid Placed",note : note})
     }catch(err){
