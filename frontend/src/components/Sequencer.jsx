@@ -15,6 +15,25 @@ const EMPTY_STEPS = {
   pad: Array(16).fill(false),
 };
 
+const TrackIcon = ({ track }) => {
+  switch (track) {
+    case "kick":
+      return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-violet-500"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3"></circle></svg>;
+    case "snare":
+      return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-emerald-500"><path d="M4 14l8-8m-4 8l8-8"></path><circle cx="12" cy="12" r="9"></circle></svg>;
+    case "hat":
+      return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-cyan-500"><path d="M2 12h20M12 2l-8 10h16z"></path></svg>;
+    case "bass":
+      return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-fuchsia-500"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>;
+    case "synth":
+      return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-amber-500"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M6 8v8M10 8v8M14 8v8M18 8v8"></path></svg>;
+    case "pad":
+      return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-rose-500"><path d="M2 12h4l3-9 5 18 3-9h5"></path></svg>;
+    default:
+      return null;
+  }
+};
+
 export default function Sequencer({ roomId }) {
   const { token, isAuthenticated } = useAuth();
   const isCollab = !!roomId;
@@ -31,7 +50,7 @@ export default function Sequencer({ roomId }) {
   // Recording & Upload state
   const [isRecording, setIsRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState("");
-  const [form, setForm] = useState({ title: "", genre: "", rate: "", description: "" });
+  const [form, setForm] = useState({ title: "", genre: "", rate: "", description: "", isForBidding: true });
   const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState({ error: "", success: "" });
 
@@ -223,7 +242,7 @@ export default function Sequencer({ roomId }) {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!blob.current || !form.title || !form.genre || !form.rate) {
+    if (!blob.current || !form.title || !form.genre || (form.isForBidding && !form.rate)) {
       setMsg({ error: "Please fill in all required fields.", success: "" });
       return;
     }
@@ -233,7 +252,13 @@ export default function Sequencer({ roomId }) {
 
     const body = new FormData();
     body.append("file", blob.current, "composition.webm");
-    Object.entries(form).forEach(([k, v]) => body.append(k, v));
+    
+    // Append form data
+    body.append("title", form.title);
+    body.append("genre", form.genre);
+    body.append("description", form.description);
+    body.append("isForBidding", form.isForBidding);
+    body.append("rate", form.isForBidding ? form.rate : 0);
 
     try {
       const res = await fetch("http://localhost:3000/music/upload", {
@@ -244,7 +269,7 @@ export default function Sequencer({ roomId }) {
       const data = await res.json();
       if (res.ok && data.note) {
         setMsg({ error: "", success: "Composition uploaded successfully to Cloudinary!" });
-        setForm({ title: "", genre: "", rate: "", description: "" });
+        setForm({ title: "", genre: "", rate: "", description: "", isForBidding: true });
         blob.current = null;
         setAudioUrl("");
       } else {
@@ -278,7 +303,7 @@ export default function Sequencer({ roomId }) {
             <code className="px-2 py-1 bg-slate-100 text-slate-800 rounded text-sm font-mono">{roomId}</code>
             <button
               onClick={copyLink}
-              className="px-3 py-1 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded cursor-pointer transition"
+              className="px-3 py-1 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-text-primary rounded cursor-pointer transition"
             >
               {copied ? "Copied!" : "Copy Link"}
             </button>
@@ -290,17 +315,32 @@ export default function Sequencer({ roomId }) {
         </div>
       )}
 
+      {/* Quick Explainer */}
+      <div className="bg-violet-500/10 border border-violet-500/20 p-4 rounded-2xl flex items-start gap-4 animate-fade-in">
+        <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center shrink-0">
+          <svg className="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <h4 className="text-sm font-bold text-violet-400 mb-1">How to use the Studio</h4>
+          <p className="text-xs text-text-secondary leading-relaxed">
+            Click the grid to place notes. Use <strong className="text-text-primary">Kick, Snare & Hat</strong> for rhythm, <strong className="text-text-primary">Bass</strong> for the low-end foundation, and <strong className="text-text-primary">Synth & Pad</strong> for melodies and atmosphere. Hit <strong className="text-text-primary">Play</strong> to hear your loop, and <strong className="text-text-primary">Record</strong> when you're ready to share!
+          </p>
+        </div>
+      </div>
+
       {/* Controls */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <button onClick={togglePlay} className="px-4 py-2 bg-black text-white rounded cursor-pointer">
+      <div className="flex items-center gap-4 flex-wrap bg-surface-elevated border border-border-subtle p-4 rounded-2xl shadow-sm">
+        <button onClick={togglePlay} className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white rounded-xl font-bold cursor-pointer shadow-lg shadow-violet-500/15 transition-all duration-200">
           {playing ? "Pause" : "Play"}
         </button>
-        <button onClick={clearAll} className="px-4 py-2 border rounded cursor-pointer">
+        <button onClick={clearAll} className="px-6 py-2.5 bg-surface-card hover:bg-surface-hover border border-border-subtle text-text-primary rounded-xl font-semibold cursor-pointer transition-all duration-200">
           Clear
         </button>
         <button
           onClick={handleRecordToggle}
-          className={`px-4 py-2 rounded text-white font-semibold cursor-pointer transition ${isRecording ? "bg-red-600 animate-pulse" : "bg-red-500 hover:bg-red-600"}`}
+          className={`px-6 py-2.5 rounded-xl text-white font-bold cursor-pointer transition-all duration-200 shadow-lg ${isRecording ? "bg-red-600 animate-pulse shadow-red-600/30" : "bg-red-500 hover:bg-red-600 shadow-red-500/15"}`}
         >
           {isRecording ? "Stop Recording" : "● Record"}
         </button>
@@ -313,16 +353,23 @@ export default function Sequencer({ roomId }) {
       </div>
 
       {/* Step Grid */}
-      <div className="space-y-3">
+      <div className="space-y-3 bg-surface-elevated border border-border-subtle p-6 rounded-2xl shadow-sm">
         {TRACKS.map(track => (
           <div key={track} className="flex items-center gap-3">
-            <div className="w-16 uppercase text-sm">{track}</div>
-            <div className="grid grid-cols-16 gap-1 flex-1">
+            <div className="w-24 flex items-center justify-between text-sm font-bold text-text-secondary uppercase tracking-wide">
+              {track} <TrackIcon track={track} />
+            </div>
+            <div className="grid grid-cols-16 gap-1.5 flex-1">
               {(steps[track] || Array(16).fill(false)).map((active, index) => (
                 <button
                   key={index}
                   onClick={() => toggleStep(track, index)}
-                  className={`h-10 rounded border transition cursor-pointer ${active ? "bg-black" : "bg-white"} ${currentStep === index ? "ring-2 ring-blue-500" : ""}`}
+                  className={`h-12 rounded-lg border transition-all cursor-pointer ${
+                    active 
+                      ? "bg-violet-500 border-violet-400 shadow-[0_0_10px_rgba(139,92,246,0.5)]" 
+                      : "bg-surface-card border-border-subtle hover:border-violet-500/50"
+                  } ${currentStep === index ? "ring-2 ring-cyan-400 ring-offset-2 ring-offset-surface-elevated scale-105 z-10" : ""}`}
+                  aria-label={`Toggle ${track} step ${index + 1}`}
                 />
               ))}
             </div>
@@ -357,7 +404,7 @@ export default function Sequencer({ roomId }) {
               <a
                 href={audioUrl}
                 download="collab-session.webm"
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-semibold text-sm cursor-pointer transition"
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-text-primary rounded font-semibold text-sm cursor-pointer transition"
               >
                 ↓ Download Recording
               </a>
@@ -373,33 +420,87 @@ export default function Sequencer({ roomId }) {
                     <p className="font-semibold text-sm">Authentication Required</p>
                     <p className="text-xs text-amber-700">You must be logged in to upload and share your compositions on TuneTalent.</p>
                   </div>
-                  <Link to="/login" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-semibold whitespace-nowrap">
+                  <Link to="/login" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-text-primary rounded text-sm font-semibold whitespace-nowrap">
                     Log In
                   </Link>
                 </div>
               ) : (
                 <form onSubmit={handleUpload} className="space-y-4 border-t border-slate-200 pt-6">
                   <h4 className="text-md font-bold text-slate-800">Publish to TuneTalent</h4>
+                  
+                  {/* Bidding Toggle */}
+                  <div className="flex items-center gap-2 py-1">
+                    <input
+                      type="checkbox"
+                      id="isForBidding"
+                      checked={form.isForBidding}
+                      onChange={(e) => setForm(prev => ({ 
+                        ...prev, 
+                        isForBidding: e.target.checked,
+                        rate: e.target.checked ? prev.rate : "" 
+                      }))}
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+                    />
+                    <label htmlFor="isForBidding" className="text-sm font-semibold text-slate-700 cursor-pointer select-none">
+                      Enable bidding for this composition (Put up for sale)
+                    </label>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[
-                      { name: "title", label: "Composition Title *", placeholder: "e.g. Synth Jam", type: "text" },
-                      { name: "genre", label: "Genre *", placeholder: "e.g. Electronic", type: "text" },
-                      { name: "rate", label: "Starting Bid (₹) *", placeholder: "e.g. 500", type: "number" },
-                    ].map(({ name, label, placeholder, type }) => (
-                      <div key={name} className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-slate-600">{label}</label>
-                        <input type={type} required min={type === "number" ? 1 : undefined} value={form[name]} onChange={e => setForm(prev => ({ ...prev, [name]: e.target.value }))} placeholder={placeholder} className="p-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-slate-600">Composition Title *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={form.title} 
+                        onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))} 
+                        placeholder="e.g. Synth Jam" 
+                        className="p-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-slate-600">Genre *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={form.genre} 
+                        onChange={e => setForm(prev => ({ ...prev, genre: e.target.value }))} 
+                        placeholder="e.g. Electronic" 
+                        className="p-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                      />
+                    </div>
+
+                    {form.isForBidding && (
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold text-slate-600">Starting Bid (₹) *</label>
+                        <input 
+                          type="number" 
+                          required 
+                          min={1} 
+                          value={form.rate} 
+                          onChange={e => setForm(prev => ({ ...prev, rate: e.target.value }))} 
+                          placeholder="e.g. 500" 
+                          className="p-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        />
                       </div>
-                    ))}
+                    )}
+
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-slate-600">Description</label>
-                      <textarea value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} placeholder="Briefly describe your beat..." rows="1" className="p-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y" />
+                      <textarea 
+                        value={form.description} 
+                        onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} 
+                        placeholder="Briefly describe your beat..." 
+                        rows="1" 
+                        className="p-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y" 
+                      />
                     </div>
                   </div>
                   {msg.error && <p className="text-sm font-semibold text-red-600">{msg.error}</p>}
                   {msg.success && <p className="text-sm font-semibold text-green-600">{msg.success}</p>}
                   <div className="flex items-center gap-3 pt-2">
-                    <button type="submit" disabled={uploading} className={`px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold text-sm shadow cursor-pointer transition ${uploading ? "opacity-60 cursor-not-allowed animate-pulse" : ""}`}>
+                    <button type="submit" disabled={uploading} className={`px-5 py-2 bg-blue-600 hover:bg-blue-700 text-text-primary rounded font-semibold text-sm shadow cursor-pointer transition ${uploading ? "opacity-60 cursor-not-allowed animate-pulse" : ""}`}>
                       {uploading ? "Uploading to Cloudinary..." : "Publish Composition"}
                     </button>
                     <button type="button" onClick={discardRecording} className="px-4 py-2 border border-slate-200 hover:bg-slate-100 text-slate-700 rounded text-sm font-semibold cursor-pointer transition">
@@ -410,6 +511,42 @@ export default function Sequencer({ roomId }) {
               )}
             </>
           )}
+        </div>
+      )}
+
+      {/* Dynamic Background Waveform Left (Visible when playing) */}
+      {playing && (
+        <div className="fixed top-0 bottom-0 left-0 flex flex-col justify-center gap-2 opacity-30 dark:opacity-20 w-64 pl-2 pointer-events-none overflow-hidden animate-fade-in" style={{ zIndex: 0 }}>
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div
+              key={`wave-l-${i}`}
+              className="h-2.5 md:h-3.5 bg-gradient-to-r from-violet-500 to-cyan-500 rounded-r-full"
+              style={{
+                width: `${40 + Math.sin(i * 0.4) * 80 + Math.random() * 60}px`,
+                animation: `waveform-horizontal ${1 + Math.random() * 1.5}s ease-in-out infinite alternate`,
+                animationDelay: `${i * 0.05}s`,
+                transformOrigin: 'left',
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Dynamic Background Waveform Right (Visible when playing) */}
+      {playing && (
+        <div className="fixed top-0 bottom-0 right-0 flex flex-col justify-center items-end gap-2 opacity-30 dark:opacity-20 w-64 pr-2 pointer-events-none overflow-hidden animate-fade-in" style={{ zIndex: 0 }}>
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div
+              key={`wave-r-${i}`}
+              className="h-2.5 md:h-3.5 bg-gradient-to-l from-violet-500 to-cyan-500 rounded-l-full"
+              style={{
+                width: `${40 + Math.sin(i * 0.4) * 80 + Math.random() * 60}px`,
+                animation: `waveform-horizontal ${1 + Math.random() * 1.5}s ease-in-out infinite alternate`,
+                animationDelay: `${i * 0.05}s`,
+                transformOrigin: 'right',
+              }}
+            />
+          ))}
         </div>
       )}
 

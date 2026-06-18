@@ -38,8 +38,11 @@ exports.uploadnote = async (req,res) =>{
     try{
         if(!req.file) return res.json({message : "No File Uploaded"})
 
-        const {title,description,rate,genre} = req.body
-        if(!title || !rate || !genre) return res.json({message : "Error Missing Fields"})
+        const {title,description,rate,genre,isForBidding} = req.body
+        const bidding = isForBidding !== 'false' && isForBidding !== false;
+
+        if(!title || !genre) return res.json({message : "Error Missing Fields"})
+        if(bidding && !rate) return res.json({message : "Error Missing Fields"})
 
         let user = await usermodel.findOne({username : req.user.username})
         if(!user) return res.json({message : "User Not Found"})
@@ -57,7 +60,9 @@ exports.uploadnote = async (req,res) =>{
             genre : genre,
             description : description,
             fileurl : result.secure_url,
-            rate : rate
+            rate : bidding ? rate : 0,
+            isForBidding : bidding,
+            biddingClosed : !bidding
         })
 
         res.status(201).json({message : "Music Note Uploaded",note : note})
@@ -71,7 +76,7 @@ exports.getmynotes = async (req,res) =>{
         let user = await usermodel.findOne({username : req.user.username})
         if(!user) return res.json({message : "User Not Found"})
 
-        let notes = await musicnotemodel.find({user : user._id}).populate('user','username email').populate('bids.user','username')
+        let notes = await musicnotemodel.find({user : user._id}).populate('user','username email').populate('bids.user','username email phone bio profileimage')
         notes = await checkAndCloseMultipleBidding(notes)
         res.status(200).json({message : "Notes Fetched",notes : notes})
     }catch(err){
@@ -91,7 +96,7 @@ exports.getallnotes = async (req,res) =>{
 
 exports.getnotebyid = async (req,res) =>{
     try{
-        let note = await musicnotemodel.findById(req.params.noteid).populate('user','username email').populate('ratings.user','username').populate('bids.user','username')
+        let note = await musicnotemodel.findById(req.params.noteid).populate('user','username email').populate('ratings.user','username').populate('bids.user','username email phone bio profileimage')
         if(!note) return res.json({message : "Note Not Found"})
 
         note = await checkAndCloseBidding(note)
@@ -186,7 +191,7 @@ exports.getnotebids = async (req,res) =>{
         let user = await usermodel.findOne({username : req.user.username})
         if(!user) return res.json({message : "User Not Found"})
 
-        let note = await musicnotemodel.findById(req.params.noteid).populate('bids.user','username email')
+        let note = await musicnotemodel.findById(req.params.noteid).populate('bids.user','username email phone bio profileimage')
         if(!note) return res.json({message : "Note Not Found"})
 
         if(note.user.toString() !== user._id.toString()) return res.json({message : "Only note owner can view bids"})

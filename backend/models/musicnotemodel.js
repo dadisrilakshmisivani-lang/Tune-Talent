@@ -6,7 +6,8 @@ let musicnoteschema = new mongoose.Schema({
     genre:{type : String,required : true},
     description :{type : String},
     fileurl :{type : String,required : true},
-    rate :{type : Number,required : true},
+    rate :{type : Number,default : 0},
+    isForBidding :{type : Boolean,default : true},
     ratings :[{
         user :{type : mongoose.Schema.Types.ObjectId,ref : 'User'},
         value :{type : Number,min : 1,max : 5}
