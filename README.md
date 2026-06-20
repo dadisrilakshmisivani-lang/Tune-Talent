@@ -7,8 +7,9 @@ Demo Link:https://tune-talent.vercel.app/
 Tune-Talent is a full-stack music freelancing platform designed to connect musicians and clients in a collaborative digital environment. The platform enables musicians to showcase their talent, share compositions, collaborate in real time, and build professional profiles while providing clients with an easy way to discover and hire skilled artists.
 
 🚀** Features**
-**
-🔐 Secure Authentication**
+
+
+**🔐 Secure Authentication**
 
 User registration and login
 JWT-based authentication and authorization
